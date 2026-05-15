@@ -3,13 +3,16 @@ import pandas as pd
 
 model = joblib.load("models/model.pkl")
 
-def predict(feature1, feature2):
+def predict(data_dict):
 
-    data = pd.DataFrame([{
-        "feature1": feature1,
-        "feature2": feature2
-    }])
+    df = pd.DataFrame([data_dict])
 
-    pred = model.predict(data)
+    # añadir columnas faltantes automáticamente
+    df = df.reindex(
+        columns=model.feature_names_in_,
+        fill_value=0
+    )
 
-    return int(pred[0])
+    prediction = model.predict(df)
+
+    return int(prediction[0])

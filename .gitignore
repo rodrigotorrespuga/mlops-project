@@ -4,4 +4,5 @@ __pycache__/
 wandb/
 .git/
 .ipynb_checkpoints/
+data/merged.csv
 *.pyc

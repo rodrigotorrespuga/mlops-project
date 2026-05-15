@@ -1,25 +1,16 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-
 from src.predict import predict
 
 app = FastAPI()
 
-class InputData(BaseModel):
-    feature1: float
-    feature2: float
-
 @app.get("/")
 def home():
-    return {"message": "API funcionando"}
+    return {"message": "SWaT Attack Detection API funcionando"}
 
 @app.post("/predict")
-def predict_endpoint(data: InputData):
+def predict_endpoint(data: dict):
 
-    prediction = predict(
-        data.feature1,
-        data.feature2
-    )
+    prediction = predict(data)
 
     return {
         "prediction": prediction

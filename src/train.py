@@ -1,18 +1,106 @@
 import pandas as pd
-import numpy as np
 import joblib
 import wandb
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 
 # =========================
 # W&B
 # =========================
-import wandb
 
-wandb.login(key="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")
+wandb.init(
+    project="swat-mlops",
+    config={
+        "model": "RandomForest",
+        "test_size": 0.2,
+        "random_state": 42,
+        "n_estimators": 100
+    }
+)
+
+config = wandb.config
+
+# =========================
+# LOAD DATA
+# =========================
+
+df = pd.read_csv("data/merged.csv")
+
+# limpiar nombres columnas
+df.columns = df.columns.str.strip()
+
+# target
+df["target"] = df["Normal/Attack"].apply(
+    lambda x: 0 if x == "Normal" else 1
+)
+
+# eliminar columnas no útiles
+X = df.drop(columns=["Timestamp", "Normal/Attack", "target"])
+
+y = df["target"]
+
+# =========================
+# SPLIT
+# =========================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=config.test_size,
+    random_state=config.random_state,
+    stratify=y
+)
+
+# =========================
+# MODEL
+# =========================
+
+model = RandomForestClassifier(
+    n_estimators=config.n_estimators,
+    random_state=config.random_state,
+    n_jobs=-1
+)
+
+model.fit(X_train, y_train)
+
+# =========================
+# EVALUATION
+# =========================
+
+preds = model.predict(X_test)
+
+accuracy = accuracy_score(y_test, preds)
+
+print(f"Accuracy: {accuracy}")
+
+print(classification_report(y_test, preds))
+
+# =========================
+# LOGGING
+# =========================
+
+wandb.log({
+    "accuracy": accuracy
+})
+
+# =========================
+# SAVE MODEL
+# =========================
+
+joblib.dump(model, "models/model.pkl")
+
+artifact = wandb.Artifact(
+    name="swat-randomforest",
+    type="model"
+)
+
+artifact.add_file("models/model.pkl")
+
+wandb.log_artifact(artifact)
+
+print("Modelo guardado.")
 wandb.init(
     project="mlops-project",
     config={
